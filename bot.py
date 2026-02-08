@@ -1,41 +1,35 @@
+import os
 import asyncio
-import subprocess
-import sys
-
-# Устанавливаем библиотеку
-def install_package(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-try:
-    from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-except ImportError:
-    print("Устанавливаю python-telegram-bot...")
-    install_package("python-telegram-bot")
-    from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 async def main():
-    print("=== НАСТРОЙКА ЗАКРЕПЛЕННОГО СООБЩЕНИЯ С ПРАЙСОМ ===")
+    # Получаем переменные из Railway
+    BOT_TOKEN = os.environ.get("8318221511:AAFkBP4pnqGGV7ovEHfT1yIgVHvi4yK-2Fg")
+    CHAT_ID = os.environ.get("-1001874164448")
     
-    # Ввод данных
-    BOT_TOKEN = input("\8318221511:AAFkBP4pnqGGV7ovEHfT1yIgVHvi4yK-2Fg").strip()
-    CHAT_ID = input("-1001874164448").strip()
+    if not BOT_TOKEN or not CHAT_ID:
+        print("❌ Ошибка: не найдены BOT_TOKEN или CHAT_ID")
+        print("👉 Добавьте их в Railway → Variables")
+        return
     
-    # Создаем кнопку
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton(
-            text="⚡️ Прайс",
-            web_app=WebAppInfo(url="https://price2026-production.up.railway.app")
-        )
-    ]])
-    
-    # Отправляем сообщение
-    print("\nОтправляю сообщение...")
-    bot = Bot(token=BOT_TOKEN)
+    print("🚀 Начинаю отправку закрепленного сообщения...")
     
     try:
+        # Создаем бота
+        bot = Bot(token=BOT_TOKEN)
+        
+        # Создаем кнопку
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                text="Прайс ⚡️",
+                web_app=WebAppInfo(url="https://price2026-production.up.railway.app")
+            )
+        ]])
+        
+        # Отправляем сообщение
         message = await bot.send_message(
             chat_id=CHAT_ID,
-            text="Прайс тут:",
+            text="Прайс:",
             parse_mode='Markdown',
             reply_markup=keyboard,
             disable_notification=True
@@ -43,15 +37,17 @@ async def main():
         
         # Закрепляем
         await bot.pin_chat_message(chat_id=CHAT_ID, message_id=message.message_id)
-        print("\n✅ УСПЕХ! Сообщение закреплено в группе.")
-        print("✅ Кнопка ведет на: https://price2026-production.up.railway.app")
+        
+        print("✅ Сообщение успешно отправлено и закреплено!")
+        print(f"🔗 Ссылка: https://price2026-production.up.railway.app")
+        
+        # Оставляем процесс активным на 30 секунд, чтобы увидеть результат
+        print("⏳ Завершаю через 30 секунд...")
+        await asyncio.sleep(30)
         
     except Exception as e:
-        print(f"\n❌ Ошибка: {e}")
-        print("Проверьте:")
-        print("1. Токен бота")
-        print("2. ID группы")
-        print("3. Права бота (должен быть администратором)")
+        print(f"❌ Ошибка: {e}")
+        await asyncio.sleep(60)  # Ждем минуту чтобы увидеть ошибку
 
 # Запускаем
 if __name__ == "__main__":
