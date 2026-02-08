@@ -1,24 +1,16 @@
 import os
 import asyncio
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from telegram.error import TelegramError
 
-async def main():
-    # Получаем переменные из Railway
-    BOT_TOKEN = os.environ.get("8318221511:AAFkBP4pnqGGV7ovEHfT1yIgVHvi4yK-2Fg")
-    CHAT_ID = os.environ.get("-1001874164448")
-    
-    if not BOT_TOKEN or not CHAT_ID:
-        print("❌ Ошибка: не найдены BOT_TOKEN или CHAT_ID")
-        print("👉 Добавьте их в Railway → Variables")
-        return
-    
-    print("🚀 Начинаю отправку закрепленного сообщения...")
-    
+BOT_TOKEN = os.environ.get("8318221511:AAFkBP4pnqGGV7ovEHfT1yIgVHvi4yK-2Fg")
+CHAT_ID = os.environ.get("-1001874164448")
+
+async def send_and_pin_price():
+    """Отправляет и закрепляет сообщение с прайсом"""
     try:
-        # Создаем бота
         bot = Bot(token=BOT_TOKEN)
         
-        # Создаем кнопку
         keyboard = InlineKeyboardMarkup([[
             InlineKeyboardButton(
                 text="Прайс ⚡️",
@@ -26,29 +18,49 @@ async def main():
             )
         ]])
         
-        # Отправляем сообщение
         message = await bot.send_message(
             chat_id=CHAT_ID,
-            text="Прайс:",
+            text="Тут прайс: 🖤",
             parse_mode='Markdown',
             reply_markup=keyboard,
             disable_notification=True
         )
         
-        # Закрепляем
-        await bot.pin_chat_message(chat_id=CHAT_ID, message_id=message.message_id)
+        await bot.pin_chat_message(
+            chat_id=CHAT_ID, 
+            message_id=message.message_id,
+            disable_notification=True
+        )
         
-        print("✅ Сообщение успешно отправлено и закреплено!")
-        print(f"🔗 Ссылка: https://price2026-production.up.railway.app")
-        
-        # Оставляем процесс активным на 30 секунд, чтобы увидеть результат
-        print("⏳ Завершаю через 30 секунд...")
-        await asyncio.sleep(30)
+        print("✅ Сообщение закреплено в группе!")
+        return True
         
     except Exception as e:
         print(f"❌ Ошибка: {e}")
-        await asyncio.sleep(60)  # Ждем минуту чтобы увидеть ошибку
+        return False
 
-# Запускаем
+async def main():
+    print("🤖 Бот для закрепления прайса запущен")
+    print(f"🔑 Токен: {BOT_TOKEN[:10]}...")
+    print(f"💬 Чат: {CHAT_ID}")
+    
+    # Первая попытка отправить
+    success = await send_and_pin_price()
+    
+    if success:
+        print("✅ Задача выполнена. Бот продолжает работать...")
+        # Бот работает бесконечно, но ничего не делает
+        while True:
+            await asyncio.sleep(3600)  # Спим 1 час
+    else:
+        print("❌ Не удалось отправить сообщение. Перезапуск через 30 секунд...")
+        await asyncio.sleep(30)
+        await main()  # Перезапускаем
+
 if __name__ == "__main__":
+    # Проверяем переменные окружения
+    if not BOT_TOKEN or not CHAT_ID:
+        print("❌ Ошибка: установите BOT_TOKEN и CHAT_ID в Variables Railway!")
+        exit(1)
+    
     asyncio.run(main())
